@@ -15,7 +15,6 @@
     "license": "ISC",
     "dependencies": {
         "file-saver": "^2.0.5",
-        "wc-grid-table-xlsx-export": "file:",
         "xlsx": "^0.18.5"
     },
     "devDependencies": {
