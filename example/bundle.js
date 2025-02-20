@@ -24,6 +24,27 @@ const XLSX = require('xlsx');
 require('./style.css');
 const {saveAs} = require('file-saver');
 
+function getTextFromHTML(html){
+    if(html){
+        let div = document.createElement('div');
+        div.innerHTML = html;
+        return div.textContent || div.innerText || '';
+    } else {
+        return html;
+    }
+}
+
+function getTextFromHTMLForObject(obj){
+    let newObj = {};
+    Object.keys(obj).forEach(key => {
+        newObj[key] = getTextFromHTML(obj[key]);
+    });
+    return newObj;
+}
+
+function getTextFromHTMLForObjectArray(arr){
+    return arr.map(obj => getTextFromHTMLForObject(obj));
+}
 
 /**
  * defines all possible targets and implements their behaviour.
@@ -32,7 +53,7 @@ const exportTargets = [
     {
         name: 'excel',
         targetFn: (table, data) => {
-            const worksheet = XLSX.utils.json_to_sheet(data, {header: table.headerAll});
+            const worksheet = XLSX.utils.json_to_sheet(getTextFromHTMLForObjectArray(data), {header: table.headerAll});
             worksheet["!cols"] = table.headerAll.map(header => {
                 if (table.hiddenColumns.includes(header))
                     return {hidden: true}
@@ -116,7 +137,7 @@ function createExportOuterDiv(table, defaultSource, defaultTarget) {
 
 function createExportInnerDiv(table, defaultSource, defaultTarget) {
     let innerDiv = document.createElement('div');
-    innerDiv.classList.add('popup', 'export-menu');
+    innerDiv.classList.add('table-popup', 'export-menu');
     innerDiv.appendChild(createExportOptionsForm(table, defaultSource, defaultTarget));
     innerDiv.addEventListener('click', (e) => e.stopPropagation());
     table.elements.exportMenuInner = innerDiv;
@@ -26503,5 +26524,5 @@ if(typeof window !== 'undefined' && !window.XLSX) try { window.XLSX = XLSX; } ca
 
 }).call(this)}).call(this,require('_process'),require("buffer").Buffer)
 },{"./dist/cpexcel.js":8,"_process":6,"buffer":3,"fs":3,"stream":3}],10:[function(require,module,exports){
-var css = "div.outer-popup {\n  position: absolute;\n  top: 0px;\n  left: 0px;\n  right: 0px;\n  bottom: 0px;\n  background: rgba(100, 100, 100, 0.9);\n  padding: 200px;\n  z-index: 1000;\n}\ndiv.outer-popup.hidden {\n  visibility: hidden;\n}\ndiv.popup {\n  width: 100%;\n  height: 100%;\n  background-color: white;\n  z-index: 1001;\n  box-shadow: 5px 5px 15px 2px black;\n  padding: 10px;\n  margin: 10px;\n  box-sizing: border-box;\n}\ndiv.popup form * {\n  margin: 5px;\n  padding: 2px;\n}\n"; (require("browserify-css").createStyle(css, { "href": "style.css" }, { "insertAt": "bottom" })); module.exports = css;
+var css = "div.outer-popup {\n  position: absolute;\n  top: 0px;\n  left: 0px;\n  right: 0px;\n  bottom: 0px;\n  background: rgba(100, 100, 100, 0.9);\n  padding: 200px;\n  z-index: 1000;\n}\ndiv.outer-popup.hidden {\n  visibility: hidden;\n}\ndiv.table-popup {\n  width: 100%;\n  height: 100%;\n  background-color: white;\n  z-index: 1001;\n  box-shadow: 5px 5px 15px 2px black;\n  padding: 10px;\n  margin: 10px;\n  box-sizing: border-box;\n}\ndiv.table-popup form * {\n  margin: 5px;\n  padding: 2px;\n}\n"; (require("browserify-css").createStyle(css, { "href": "style.css" }, { "insertAt": "bottom" })); module.exports = css;
 },{"browserify-css":4}]},{},[1]);

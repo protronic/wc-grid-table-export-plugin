@@ -2,6 +2,27 @@ const XLSX = require('xlsx');
 require('./style.css');
 const {saveAs} = require('file-saver');
 
+function getTextFromHTML(html){
+    if(html){
+        let div = document.createElement('div');
+        div.innerHTML = html;
+        return div.textContent || div.innerText || '';
+    } else {
+        return html;
+    }
+}
+
+function getTextFromHTMLForObject(obj){
+    let newObj = {};
+    Object.keys(obj).forEach(key => {
+        newObj[key] = getTextFromHTML(obj[key]);
+    });
+    return newObj;
+}
+
+function getTextFromHTMLForObjectArray(arr){
+    return arr.map(obj => getTextFromHTMLForObject(obj));
+}
 
 /**
  * defines all possible targets and implements their behaviour.
@@ -10,7 +31,7 @@ const exportTargets = [
     {
         name: 'excel',
         targetFn: (table, data) => {
-            const worksheet = XLSX.utils.json_to_sheet(data, {header: table.headerAll});
+            const worksheet = XLSX.utils.json_to_sheet(getTextFromHTMLForObjectArray(data), {header: table.headerAll});
             worksheet["!cols"] = table.headerAll.map(header => {
                 if (table.hiddenColumns.includes(header))
                     return {hidden: true}
@@ -94,7 +115,7 @@ function createExportOuterDiv(table, defaultSource, defaultTarget) {
 
 function createExportInnerDiv(table, defaultSource, defaultTarget) {
     let innerDiv = document.createElement('div');
-    innerDiv.classList.add('popup', 'export-menu');
+    innerDiv.classList.add('table-popup', 'export-menu');
     innerDiv.appendChild(createExportOptionsForm(table, defaultSource, defaultTarget));
     innerDiv.addEventListener('click', (e) => e.stopPropagation());
     table.elements.exportMenuInner = innerDiv;
