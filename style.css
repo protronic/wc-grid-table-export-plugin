@@ -1,0 +1,31 @@
+div.outer-popup {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    right: 0px;
+    bottom: 0px;
+    background: rgba(100, 100, 100, 0.9);
+    padding: 200px;
+    z-index: 1000;
+}
+
+div.outer-popup.hidden {
+    visibility: hidden;
+}
+
+div.popup {
+    width: 100%;
+    height: 100%;
+    background-color: white;
+    z-index: 1001;
+    box-shadow: 5px 5px 15px 2px black;
+    padding: 10px;
+    margin: 10px;
+    box-sizing: border-box;
+}
+
+div.popup form *{
+    margin: 5px;
+    padding: 2px;
+    
+}

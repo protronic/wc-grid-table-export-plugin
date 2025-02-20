@@ -1,14 +1,27 @@
 {
-  "name": "wc-grid-table-xlsx-export",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "xlsx": "^0.18.5"
-  }
+    "name": "wc-grid-table-xlsx-export",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "build": "browserify -t browserify-css index.js > bundle.js",
+        "example": "browserify -t browserify-css example.js > example/bundle.js",
+        "build_min": "browserify -p tinyify -t browserify-css index.js > bundle.js",
+        "build_all": "npm run build_min",
+        "publish_patch": "npm run build_all && git add * && git commit && npm version patch && git push && npm publish && git push --tags"
+    },
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "file-saver": "^2.0.5",
+        "wc-grid-table-xlsx-export": "file:",
+        "xlsx": "^0.18.5"
+    },
+    "devDependencies": {
+        "browserify": "^17.0.0",
+        "browserify-css": "^0.15.0",
+        "tinyify": "^4.0.0",
+        "wc-grid-table": "^3.1.8"
+    }
 }

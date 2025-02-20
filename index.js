@@ -1,22 +1,46 @@
+const XLSX = require('xlsx');
+require('./style.css');
+const {saveAs} = require('file-saver');
+
+
 /**
  * defines all possible targets and implements their behaviour.
  */
-const exportTargets = {
-    excel: (data) => {}, //TODO: implement
-    csv: (data) => {}, //TODO: implement 
-    json: (data) => {}, //TODO: implement
-};
+const exportTargets = [
+    {
+        name: 'excel',
+        targetFn: (table, data) => {
+            const worksheet = XLSX.utils.json_to_sheet(data, {header: table.headerAll});
+            worksheet["!cols"] = table.headerAll.map(header => {
+                if (table.hiddenColumns.includes(header))
+                    return {hidden: true}
+                // wch: data.reduce((w, r) => Math.max(r, w[header].length), 10),
+            });
+            let workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
+            // console.log(worksheet["!cols"]);
+            // console.log(workbook);
+            XLSX.writeFileXLSX(workbook, `${Date.now()}.xlsx`);
+        }
+    },
+    { name: 'csv', targetFn: (table, data) => { 
+        const worksheet = XLSX.utils.json_to_sheet(data, {header: table.headerAll});
+        let csvString = XLSX.utils.sheet_to_csv(worksheet, {FS: ';'});
+        saveAs(new Blob([csvString], {type: "text/csv;charset=utf-8"}), `${Date.now()}.csv`);
+    } }, 
+    { name: 'json', targetFn: (table, data) => { saveAs(new Blob([JSON.stringify(data)], {type: "application/json"}), `${Date.now()}.json`) } },
+];
 
 /**
  * defines all possible sources and implements their behaviour.
  */
-const exportSources = {
-    'original data': (table) => table.data,
-    'sorted data': (table) => table.sortedData,
-    'formatted data': (table) => table.formattedData,
-    'filtered data': (table) => table.filteredData,
-    'paginated data': (table) => table.pageinatedData,
-};
+const exportSources = [
+    { name: 'original data', sourceFn: (table) => table.data },
+    { name: 'sorted data', sourceFn: (table) => table.sortedData },
+    { name: 'formatted data', sourceFn: (table) => table.formattedData },
+    { name: 'filtered data', sourceFn: (table) => table.filteredData },
+    { name: 'paginated data', sourceFn: (table) => table.pageinatedData },
+];
 
 /**
  * load options, that are given as attributes on the table. Mainly default behaviour.
@@ -38,8 +62,8 @@ function loadExportDefaultOptions(table) {
  * @this {TableComponent} 
  * @returns {HTMLButtonElement}
  */
-function createExportMenuButton() {
-    let boundOnExportMenuButtonHandler = onExportMenuButtonHandler.bind(null, this);
+function createExportMenuButton(table) {
+    let boundOnExportMenuButtonHandler = onExportMenuButtonHandler.bind(null, table);
     let but = document.createElement('div');
     but.classList.add('wgt-footer_cell', 'wgt-cell', 'footer-button-down', 'footer-button');
     but.textContent = "export";
@@ -58,10 +82,13 @@ function createExportMenuContainer(table) {
 }
 
 function createExportOuterDiv(table, defaultSource, defaultTarget) {
+    console.log(table);
     let outerDiv = document.createElement('div');
+    outerDiv.id = `export_menu_${table.id}`;
     outerDiv.classList.add('outer-popup', 'export-menu', 'hidden');
     outerDiv.appendChild(createExportInnerDiv(table, defaultSource, defaultTarget));
-    table.elments.exportMenuOuter = outerDiv;
+    outerDiv.addEventListener('click', (e) => (console.log('outer click'), outerDiv.classList.add('hidden')));
+    table.elements.exportMenuOuter = outerDiv;
     return outerDiv;
 }
 
@@ -69,14 +96,15 @@ function createExportInnerDiv(table, defaultSource, defaultTarget) {
     let innerDiv = document.createElement('div');
     innerDiv.classList.add('popup', 'export-menu');
     innerDiv.appendChild(createExportOptionsForm(table, defaultSource, defaultTarget));
-    table.elments.exportMenuInner = innerDiv;
+    innerDiv.addEventListener('click', (e) => e.stopPropagation());
+    table.elements.exportMenuInner = innerDiv;
     return innerDiv;
 }
 
 function createExportOptionsForm(table, defaultSource, defaultTarget) {
     let form = document.createElement('form');
-    form.appendChild(createSourceOptions(sourceSelect, defaultSource));
-    form.appendChild(createTargetOptions(targetSelect, defaultTarget));
+    form.appendChild(createSourceOptions(defaultSource));
+    form.appendChild(createTargetOptions(defaultTarget));
     form.appendChild(createExportButton(table));
     table.elements.exportForm = form;
     return form;
@@ -85,33 +113,60 @@ function createExportOptionsForm(table, defaultSource, defaultTarget) {
 function createExportButton(table) {
     let boundExportButtonHandler = onExportButtonHandler.bind(null, table);
     let but = document.createElement('button');
+    but.textContent = 'export';
     but.setAttribute('type', 'button');
     but.addEventListener('click', boundExportButtonHandler);
     return but;
 }
 
 function createSourceOptions(defaultSource) {
+    let div = document.createElement('div');
+    let label = document.createElement('label');
     let select = document.createElement('select');
-    Reflect.ownKeys(exportSources).forEach(source => {
+    label.textContent = 'Source:';
+    select.classList.add('source-select');
+    exportSources.forEach((index, i) => {
+        let source = exportSources[index];
         let sourceOption = document.createElement('option');
         if (defaultSource == source) sourceOption.classList.add('selected');
+        sourceOption.textContent = index.name;
+        sourceOption.value = i;
         select.appendChild(sourceOption);
     });
-    return select;
+    div.appendChild(label);
+    div.appendChild(select);
+    return div;
 }
 
 function createTargetOptions(defaultTarget) {
+    let div = document.createElement('div');
+    let label = document.createElement('label');
     let select = document.createElement('select');
-    Reflect.ownKeys(exportTargets).forEach(target => {
+    label.textContent = 'Target:';
+    select.classList.add('target-select');
+    exportTargets.forEach((index, i) => {
+        let target = exportSources[index];
         let targetOption = document.createElement('option');
         if (defaultTarget == target) targetOption.classList.add('selected');
+        targetOption.textContent = index.name;
+        targetOption.value = i;
         select.appendChild(targetOption);
     });
-    return select;
+    div.appendChild(label);
+    div.appendChild(select);
+    return div;
 }
 
 function onExportButtonHandler(table, event) {
-    //TODO: implement
+    let selectedTargetIndex = table.elements.exportForm.querySelector('select.target-select').value;
+    let currentTarget = exportTargets[selectedTargetIndex];
+
+    let selectedSourcceIndex = table.elements.exportForm.querySelector('select.source-select').value;
+    let currentSource = exportSources[selectedSourcceIndex];
+
+    let data = currentSource.sourceFn(table);
+    console.log({ source: currentSource.name, target: currentTarget.name });
+    currentTarget.targetFn(table, data);
 }
 
 /**
@@ -120,16 +175,20 @@ function onExportButtonHandler(table, event) {
  * @param {MouseEvent} event 
  */
 function onExportMenuButtonHandler(table, event) {
+    table.elements.exportMenuOuter.classList.toggle('hidden');
     //TODO: implement
 }
 
 function addButtonToFooter(table) {
-    let menuContainer = createExportMenuContainer(table);
-    table.elements.footer.appendChild(menuContainer);
+    // let menuContainer = createExportMenuContainer(table);
+    table.appendChild(createExportMenuContainer(table));
+    let exportMenuButton = createExportMenuButton(table);
+    console.log(exportMenuButton);
+    table.elements.footer.appendChild(exportMenuButton);
 }
 
 /**
- * @typedef {{}} ExportPlugin
+ * //TODO: declare type: @typedef {{}} ExportPlugin
  * 
  * 
  */
