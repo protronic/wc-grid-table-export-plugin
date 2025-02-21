@@ -21,7 +21,7 @@ div.table-popup {
     z-index: 1001;
     box-shadow: 5px 5px 15px 2px black;
     padding: 10px;
-    margin: 10px;
+    margin: auto;
     box-sizing: border-box;
 }
 
